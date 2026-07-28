@@ -53,7 +53,8 @@ public class IncidentRepositoryJdbc implements IncidentRepository {
     public void save(Incident incident) {
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_SQL)) {
-            bindIncident(statement, incident);
+            statement.setString(1, incident.getId().getValue());
+            bindIncidentFields(statement, incident, 2);
             statement.executeUpdate();
         } catch (SQLException exception) {
             throw new PersistenceException("Unable to save incident", exception);
@@ -126,33 +127,23 @@ public class IncidentRepositoryJdbc implements IncidentRepository {
         }
     }
 
-    private void bindIncident(PreparedStatement statement, Incident incident) throws SQLException {
-        statement.setString(1, incident.getId().getValue());
-        statement.setString(2, incident.getTitle());
-        statement.setString(3, incident.getDescription());
-        statement.setString(4, incident.getCategory().name());
-        statement.setString(5, incident.getImpact().name());
-        statement.setString(6, incident.getUrgency().name());
-        statement.setString(7, incident.getPriority().name());
-        statement.setString(8, incident.getStatus().name());
-        statement.setString(9, incident.getCreationDate().toString());
-        setNullableString(statement, 10, nullableDate(incident.getClosingDate()));
-        setNullableString(statement, 11, incident.getSolutionDescription());
-        statement.setString(12, incident.getClassOfService().name());
+    private void bindUpdate(PreparedStatement statement, Incident incident) throws SQLException {
+        bindIncidentFields(statement, incident, 1);
     }
 
-    private void bindUpdate(PreparedStatement statement, Incident incident) throws SQLException {
-        statement.setString(1, incident.getTitle());
-        statement.setString(2, incident.getDescription());
-        statement.setString(3, incident.getCategory().name());
-        statement.setString(4, incident.getImpact().name());
-        statement.setString(5, incident.getUrgency().name());
-        statement.setString(6, incident.getPriority().name());
-        statement.setString(7, incident.getStatus().name());
-        statement.setString(8, incident.getCreationDate().toString());
-        setNullableString(statement, 9, nullableDate(incident.getClosingDate()));
-        setNullableString(statement, 10, incident.getSolutionDescription());
-        statement.setString(11, incident.getClassOfService().name());
+    private void bindIncidentFields(PreparedStatement statement, Incident incident, int startIndex)
+            throws SQLException {
+        statement.setString(startIndex, incident.getTitle());
+        statement.setString(startIndex + 1, incident.getDescription());
+        statement.setString(startIndex + 2, incident.getCategory().name());
+        statement.setString(startIndex + 3, incident.getImpact().name());
+        statement.setString(startIndex + 4, incident.getUrgency().name());
+        statement.setString(startIndex + 5, incident.getPriority().name());
+        statement.setString(startIndex + 6, incident.getStatus().name());
+        statement.setString(startIndex + 7, incident.getCreationDate().toString());
+        setNullableString(statement, startIndex + 8, nullableDate(incident.getClosingDate()));
+        setNullableString(statement, startIndex + 9, incident.getSolutionDescription());
+        statement.setString(startIndex + 10, incident.getClassOfService().name());
     }
 
     private Incident mapIncident(ResultSet resultSet) throws SQLException {
