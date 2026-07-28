@@ -1,4 +1,7 @@
 package com.helpdeskflow.model;
 
-public class Priority {
+public enum Priority {
+    NORMAL,
+    HIGH,
+    CRITICAL
 }
