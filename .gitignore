@@ -1,0 +1,43 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Java
+*.class
+*.jar
+hs_err_pid*
+replay_pid*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse / NetBeans
+.classpath
+.project
+.settings/
+nbproject/private/
+nbbuild/
+dist/
+
+# Visual Studio Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# OS and tooling
+.DS_Store
+*.log
+
+# Local database/runtime files
+*.db
+*.sqlite
+*.sqlite3
