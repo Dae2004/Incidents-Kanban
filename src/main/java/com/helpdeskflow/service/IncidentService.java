@@ -8,6 +8,7 @@ import com.helpdeskflow.model.IncidentId;
 import com.helpdeskflow.model.Priority;
 import com.helpdeskflow.model.Status;
 import com.helpdeskflow.model.Urgency;
+import com.helpdeskflow.repository.IncidentRepository;
 import com.helpdeskflow.validator.IncidentInputValidator;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class IncidentService {
 
     private final PriorityCalculator priorityCalculator;
     private final StateTransitionValidator stateTransitionValidator;
+    private final IncidentRepository incidentRepository;
     private final List<Incident> registeredIncidents = new ArrayList<>();
     private static final Set<Status> OPEN_STATUSES = Set.of(
             Status.REGISTERED,
@@ -32,17 +34,28 @@ public class IncidentService {
     );
 
     public IncidentService() {
-        this(new PriorityCalculator(), new StateTransitionValidator());
+        this(new PriorityCalculator(), new StateTransitionValidator(), null);
     }
 
     public IncidentService(PriorityCalculator priorityCalculator) {
-        this(priorityCalculator, new StateTransitionValidator());
+        this(priorityCalculator, new StateTransitionValidator(), null);
+    }
+
+    public IncidentService(IncidentRepository incidentRepository) {
+        this(new PriorityCalculator(), new StateTransitionValidator(), incidentRepository);
     }
 
     public IncidentService(PriorityCalculator priorityCalculator,
                            StateTransitionValidator stateTransitionValidator) {
+        this(priorityCalculator, stateTransitionValidator, null);
+    }
+
+    public IncidentService(PriorityCalculator priorityCalculator,
+                           StateTransitionValidator stateTransitionValidator,
+                           IncidentRepository incidentRepository) {
         this.priorityCalculator = priorityCalculator;
         this.stateTransitionValidator = stateTransitionValidator;
+        this.incidentRepository = incidentRepository;
     }
 
     public Incident registerIncident(String title, String description, Category category,
@@ -69,7 +82,11 @@ public class IncidentService {
                 null,
                 classOfService
         );
-        registeredIncidents.add(incident);
+        if (incidentRepository == null) {
+            registeredIncidents.add(incident);
+        } else {
+            incidentRepository.save(incident);
+        }
         return incident;
     }
 
@@ -79,6 +96,9 @@ public class IncidentService {
         }
         stateTransitionValidator.validateTransition(incident.getStatus(), targetStatus);
         incident.setStatus(targetStatus);
+        if (incidentRepository != null) {
+            incidentRepository.update(incident);
+        }
     }
 
     public List<Incident> getRegisteredIncidents() {
@@ -86,12 +106,18 @@ public class IncidentService {
     }
 
     public Optional<Incident> findById(IncidentId incidentId) {
+        if (incidentRepository != null) {
+            return incidentRepository.findById(incidentId);
+        }
         return registeredIncidents.stream()
                 .filter(incident -> Objects.equals(incident.getId(), incidentId))
                 .findFirst();
     }
 
     public List<Incident> getAllIncidents() {
+        if (incidentRepository != null) {
+            return List.copyOf(incidentRepository.findAll());
+        }
         return List.copyOf(registeredIncidents);
     }
 
@@ -112,7 +138,7 @@ public class IncidentService {
     }
 
     private List<Incident> filter(Predicate<Incident> condition) {
-        return registeredIncidents.stream()
+        return getAllIncidents().stream()
                 .filter(condition)
                 .toList();
     }
