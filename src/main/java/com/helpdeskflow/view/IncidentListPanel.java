@@ -33,7 +33,7 @@ public class IncidentListPanel extends JPanel {
     private final JComboBox<String> scopeBox = new JComboBox<>(new String[]{"Todas", "Abiertas", "Cerradas"});
     private final JComboBox<Status> targetStatusBox = new JComboBox<>(Status.values());
     private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"ID", "Título", "Prioridad", "Estado", "Categoría"}, 0) {
+            new Object[]{"ID", "Título", "Prioridad", "Estado", "Categoría", "Clase de servicio"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -126,7 +126,7 @@ public class IncidentListPanel extends JPanel {
         tableModel.setRowCount(0);
         for (Incident incident : displayedIncidents) {
             tableModel.addRow(new Object[]{incident.getId(), incident.getTitle(), incident.getPriority(),
-                    incident.getStatus(), incident.getCategory()});
+                    incident.getStatus(), incident.getCategory(), incident.getClassOfService()});
         }
     }
 

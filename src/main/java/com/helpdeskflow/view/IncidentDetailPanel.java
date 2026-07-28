@@ -13,15 +13,17 @@ public class IncidentDetailPanel extends JPanel {
     private final JLabel titleLabel = new JLabel("-");
     private final JLabel statusLabel = new JLabel("-");
     private final JLabel priorityLabel = new JLabel("-");
+    private final JLabel classOfServiceLabel = new JLabel("-");
     private final JLabel datesLabel = new JLabel("-");
 
     public IncidentDetailPanel() {
         setBorder(BorderFactory.createTitledBorder("Detalle"));
-        setLayout(new GridLayout(5, 1, 4, 4));
+        setLayout(new GridLayout(6, 1, 4, 4));
         add(idLabel);
         add(titleLabel);
         add(statusLabel);
         add(priorityLabel);
+        add(classOfServiceLabel);
         add(datesLabel);
     }
 
@@ -31,6 +33,7 @@ public class IncidentDetailPanel extends JPanel {
             titleLabel.setText("Título: -");
             statusLabel.setText("Estado: -");
             priorityLabel.setText("Prioridad: -");
+            classOfServiceLabel.setText("Clase de servicio: -");
             datesLabel.setText("Creación: -");
             return;
         }
@@ -38,6 +41,7 @@ public class IncidentDetailPanel extends JPanel {
         titleLabel.setText("Título: " + incident.getTitle());
         statusLabel.setText("Estado: " + incident.getStatus());
         priorityLabel.setText("Prioridad: " + incident.getPriority());
+        classOfServiceLabel.setText("Clase de servicio: " + incident.getClassOfService());
         datesLabel.setText("Creación: " + incident.getCreationDate()
                 + " | Cierre: " + (incident.getClosingDate() == null ? "-" : incident.getClosingDate()));
     }
