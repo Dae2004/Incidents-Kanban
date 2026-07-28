@@ -13,13 +13,23 @@ import com.helpdeskflow.validator.IncidentInputValidator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public class IncidentService {
 
     private final PriorityCalculator priorityCalculator;
     private final StateTransitionValidator stateTransitionValidator;
     private final List<Incident> registeredIncidents = new ArrayList<>();
+    private static final Set<Status> OPEN_STATUSES = Set.of(
+            Status.REGISTERED,
+            Status.READY,
+            Status.IN_DEVELOPMENT,
+            Status.IN_VALIDATION
+    );
 
     public IncidentService() {
         this(new PriorityCalculator(), new StateTransitionValidator());
@@ -72,6 +82,38 @@ public class IncidentService {
     }
 
     public List<Incident> getRegisteredIncidents() {
+        return getAllIncidents();
+    }
+
+    public Optional<Incident> findById(IncidentId incidentId) {
+        return registeredIncidents.stream()
+                .filter(incident -> Objects.equals(incident.getId(), incidentId))
+                .findFirst();
+    }
+
+    public List<Incident> getAllIncidents() {
         return List.copyOf(registeredIncidents);
+    }
+
+    public List<Incident> getOpenIncidents() {
+        return filter(incident -> OPEN_STATUSES.contains(incident.getStatus()));
+    }
+
+    public List<Incident> getClosedIncidents() {
+        return findByStatus(Status.FINISHED);
+    }
+
+    public List<Incident> findByPriority(Priority priority) {
+        return filter(incident -> incident.getPriority() == priority);
+    }
+
+    public List<Incident> findByStatus(Status status) {
+        return filter(incident -> incident.getStatus() == status);
+    }
+
+    private List<Incident> filter(Predicate<Incident> condition) {
+        return registeredIncidents.stream()
+                .filter(condition)
+                .toList();
     }
 }
