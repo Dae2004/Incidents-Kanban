@@ -18,14 +18,21 @@ import java.util.UUID;
 public class IncidentService {
 
     private final PriorityCalculator priorityCalculator;
+    private final StateTransitionValidator stateTransitionValidator;
     private final List<Incident> registeredIncidents = new ArrayList<>();
 
     public IncidentService() {
-        this(new PriorityCalculator());
+        this(new PriorityCalculator(), new StateTransitionValidator());
     }
 
     public IncidentService(PriorityCalculator priorityCalculator) {
+        this(priorityCalculator, new StateTransitionValidator());
+    }
+
+    public IncidentService(PriorityCalculator priorityCalculator,
+                           StateTransitionValidator stateTransitionValidator) {
         this.priorityCalculator = priorityCalculator;
+        this.stateTransitionValidator = stateTransitionValidator;
     }
 
     public Incident registerIncident(String title, String description, Category category,
@@ -54,6 +61,14 @@ public class IncidentService {
         );
         registeredIncidents.add(incident);
         return incident;
+    }
+
+    public void transitionIncident(Incident incident, Status targetStatus) {
+        if (incident == null) {
+            throw new IllegalArgumentException("Incident cannot be null");
+        }
+        stateTransitionValidator.validateTransition(incident.getStatus(), targetStatus);
+        incident.setStatus(targetStatus);
     }
 
     public List<Incident> getRegisteredIncidents() {
