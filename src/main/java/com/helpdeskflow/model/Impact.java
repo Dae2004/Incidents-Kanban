@@ -1,4 +1,7 @@
 package com.helpdeskflow.model;
 
-public class Impact {
+public enum Impact {
+    LOW,
+    MEDIUM,
+    HIGH
 }

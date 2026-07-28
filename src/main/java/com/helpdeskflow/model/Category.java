@@ -1,4 +1,9 @@
 package com.helpdeskflow.model;
 
-public class Category {
+public enum Category {
+    SOFTWARE,
+    HARDWARE,
+    NETWORK,
+    SECURITY,
+    OTHER
 }

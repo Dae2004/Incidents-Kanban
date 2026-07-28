@@ -1,4 +1,7 @@
 package com.helpdeskflow.model;
 
-public class Urgency {
+public enum Urgency {
+    LOW,
+    MEDIUM,
+    HIGH
 }

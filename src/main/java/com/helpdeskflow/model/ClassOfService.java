@@ -1,4 +1,6 @@
 package com.helpdeskflow.model;
 
-public class ClassOfService {
+public enum ClassOfService {
+    STANDARD,
+    EXPEDITE
 }
