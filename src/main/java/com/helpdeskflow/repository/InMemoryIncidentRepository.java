@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/** In-memory repository useful for isolated application-service use cases. */
 public class InMemoryIncidentRepository implements IncidentRepository {
 
     private final List<Incident> incidents = new ArrayList<>();

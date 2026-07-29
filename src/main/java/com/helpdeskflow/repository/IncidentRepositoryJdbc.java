@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/** SQLite/JDBC implementation of the incident repository. */
 public class IncidentRepositoryJdbc implements IncidentRepository {
 
     private static final String INSERT_SQL = """
