@@ -10,7 +10,7 @@ The application provides a small, self-contained help-desk tool. Users can regis
 
 - Java 21 (the Maven compiler is configured with `release 21`).
 - Apache Maven 3.9.16 was used for the final local validation; Maven 3.9 or newer is recommended.
-- Swing for the desktop graphical user interface.
+- JavaFX for the desktop graphical user interface.
 - SQLite through Xerial `sqlite-jdbc` 3.46.1.0.
 - JUnit Jupiter 5.10.3 for unit and persistence tests.
 - GitHub Actions with Temurin Java 21 for continuous integration.
@@ -24,7 +24,7 @@ The application follows a layered design with MVC responsibilities:
 - `repository`: persistence abstraction plus in-memory and SQLite/JDBC implementations.
 - `persistence`: SQLite connection and schema initialization.
 - `controller`: adapts user-interface actions to application services.
-- `view`: Swing panels and the main application window.
+- `view`: JavaFX panels and the main application window.
 - `validator`: input validation at the application boundary.
 - `exception`: application-specific persistence and state-transition exceptions.
 
@@ -75,13 +75,13 @@ Compile, package, and run the complete Maven verification lifecycle:
 mvn clean verify
 ```
 
-Launch the Swing application with:
+Launch the JavaFX application (modular, no warnings):
 
 ```bash
-mvn compile exec:java -Dexec.mainClass=com.helpdeskflow.HelpDeskFlowApplication
+mvn javafx:run
 ```
 
-Alternatively, run `com.helpdeskflow.HelpDeskFlowApplication` from an IDE configured with the Maven dependencies and a Java 21 SDK. A graphical desktop session is required for Swing.
+Alternatively, run `com.helpdeskflow.Launcher` from an IDE configured with the Maven dependencies and a Java 21 SDK. A graphical desktop session is required for JavaFX.
 
 ## Unit tests
 
@@ -112,7 +112,7 @@ Compilation or test failures make the workflow fail.
 - SQLite persistence with a repository abstraction and an in-memory implementation for isolated use cases.
 - Dashboard metrics for totals, status, priority, and average lead time when timestamps are available.
 - EXPEDITE class-of-service registration and filtering.
-- Swing interface for incident entry, list/detail views, and metrics.
+- JavaFX interface for incident entry, list/detail views, and metrics.
 - Automated build and test execution through GitHub Actions.
 
 ## Screenshots

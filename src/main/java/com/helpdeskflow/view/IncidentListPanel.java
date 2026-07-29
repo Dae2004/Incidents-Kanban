@@ -5,41 +5,46 @@ import com.helpdeskflow.model.Incident;
 import com.helpdeskflow.model.IncidentId;
 import com.helpdeskflow.model.Priority;
 import com.helpdeskflow.model.Status;
+import com.helpdeskflow.model.ClassOfService;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.table.DefaultTableModel;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class IncidentListPanel extends JPanel {
+/** Incident table with search, filter, and status-change controls. Displays color-coded priority rows and status badges. */
+public class IncidentListPanel extends BorderPane {
 
     private final IncidentController incidentController;
     private final Consumer<Incident> onSelectionChanged;
     private final Runnable onDataChanged;
-    private final JTextField searchField = new JTextField(16);
-    private final JComboBox<Priority> priorityBox = new JComboBox<>();
-    private final JComboBox<Status> statusBox = new JComboBox<>();
-    private final JComboBox<String> scopeBox = new JComboBox<>(new String[]{"Todas", "Abiertas", "Cerradas"});
-    private final JComboBox<Status> targetStatusBox = new JComboBox<>(Status.values());
-    private final DefaultTableModel tableModel = new DefaultTableModel(
-            new Object[]{"ID", "Título", "Prioridad", "Estado", "Categoría", "Clase de servicio"}, 0) {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    };
-    private final JTable table = new JTable(tableModel);
+    private final TextField searchField = new TextField();
+    private final ComboBox<Priority> priorityBox = new ComboBox<>();
+    private final ComboBox<Status> statusBox = new ComboBox<>();
+    private final ComboBox<String> scopeBox = new ComboBox<>();
+    private final ComboBox<Status> targetStatusBox = new ComboBox<>();
+    private final ObservableList<Incident> tableItems = FXCollections.observableArrayList();
+    private final TableView<Incident> table = new TableView<>();
+    private final Label emptyLabel = new Label("No hay incidencias registradas");
+    private final Label resultCountLabel = new Label();
     private List<Incident> displayedIncidents = List.of();
 
     public IncidentListPanel(IncidentController incidentController,
@@ -47,57 +52,214 @@ public class IncidentListPanel extends JPanel {
         this.incidentController = incidentController;
         this.onSelectionChanged = onSelectionChanged;
         this.onDataChanged = onDataChanged;
-        setBorder(BorderFactory.createTitledBorder("Incidencias"));
-        setLayout(new BorderLayout(6, 6));
-        add(createToolbar(), BorderLayout.NORTH);
+        setPadding(new Insets(8));
+        getStyleClass().add("titled-panel");
+
+        searchField.setPromptText("Buscar por ID de incidencia…");
+        searchField.setPrefColumnCount(14);
+        priorityBox.getItems().add(null);
+        priorityBox.getItems().addAll(Priority.values());
+        priorityBox.getSelectionModel().selectFirst();
+        statusBox.getItems().add(null);
+        statusBox.getItems().addAll(Status.values());
+        statusBox.getSelectionModel().selectFirst();
+        scopeBox.getItems().setAll("Todas", "Abiertas", "Cerradas");
+        scopeBox.getSelectionModel().selectFirst();
+        targetStatusBox.getItems().setAll(Status.values());
+        targetStatusBox.getSelectionModel().selectFirst();
+        EnumComboBoxConfigurer.configure(priorityBox, "Todas");
+        EnumComboBoxConfigurer.configure(statusBox, "Todas");
+        EnumComboBoxConfigurer.configure(targetStatusBox, "");
+        emptyLabel.getStyleClass().add("empty-state");
+        resultCountLabel.getStyleClass().add("toolbar-results");
+        resultCountLabel.setPadding(new Insets(4, 4, 0, 4));
+
         configureTable();
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        add(createStatusToolbar(), BorderLayout.SOUTH);
+
+        StackPane tableWrapper = new StackPane();
+        tableWrapper.getChildren().addAll(table, emptyLabel);
+        emptyLabel.setVisible(false);
+
+        VBox centerBox = new VBox(2);
+        centerBox.getChildren().addAll(resultCountLabel, tableWrapper);
+        VBox.setVgrow(tableWrapper, javafx.scene.layout.Priority.ALWAYS);
+
+        setTop(createToolbar());
+        setCenter(centerBox);
+        setBottom(createStatusToolbar());
         refresh();
     }
 
-    private JPanel createToolbar() {
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEADING));
-        toolbar.add(new JLabel("Buscar ID:"));
-        toolbar.add(searchField);
-        JButton searchButton = new JButton("Buscar");
-        searchButton.addActionListener(event -> refresh());
-        toolbar.add(searchButton);
-        toolbar.add(new JLabel("Vista:"));
-        toolbar.add(scopeBox);
-        toolbar.add(new JLabel("Prioridad:"));
-        priorityBox.addItem(null);
-        for (Priority priority : Priority.values()) {
-            priorityBox.addItem(priority);
-        }
-        toolbar.add(priorityBox);
-        toolbar.add(new JLabel("Estado:"));
-        statusBox.addItem(null);
-        for (Status status : Status.values()) {
-            statusBox.addItem(status);
-        }
-        toolbar.add(statusBox);
-        JButton refreshButton = new JButton("Actualizar");
-        refreshButton.addActionListener(event -> refresh());
-        toolbar.add(refreshButton);
+    private HBox createToolbar() {
+        HBox toolbar = new HBox(8);
+        toolbar.getStyleClass().add("toolbar");
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        toolbar.getChildren().add(new Label("Buscar ID:"));
+        toolbar.getChildren().add(searchField);
+
+        Button searchButton = new Button("Buscar");
+        searchButton.getStyleClass().add("btn-primary");
+        searchButton.setOnAction(event -> refresh());
+        toolbar.getChildren().add(searchButton);
+
+        toolbar.getChildren().add(new Label("Vista:"));
+        toolbar.getChildren().add(scopeBox);
+
+        toolbar.getChildren().add(new Label("Prioridad:"));
+        toolbar.getChildren().add(priorityBox);
+
+        toolbar.getChildren().add(new Label("Estado:"));
+        toolbar.getChildren().add(statusBox);
+
+        Button refreshButton = new Button("Actualizar");
+        refreshButton.getStyleClass().add("btn-default");
+        refreshButton.setOnAction(event -> refresh());
+        toolbar.getChildren().add(refreshButton);
+
         return toolbar;
     }
 
-    private JPanel createStatusToolbar() {
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-        toolbar.add(new JLabel("Nuevo estado:"));
-        toolbar.add(targetStatusBox);
-        JButton changeButton = new JButton("Cambiar estado");
-        changeButton.addActionListener(event -> changeSelectedStatus());
-        toolbar.add(changeButton);
+    private HBox createStatusToolbar() {
+        HBox toolbar = new HBox(8);
+        toolbar.setAlignment(Pos.CENTER_RIGHT);
+        toolbar.setPadding(new Insets(6, 0, 0, 0));
+
+        toolbar.getChildren().add(new Label("Nuevo estado:"));
+        toolbar.getChildren().add(targetStatusBox);
+
+        Button changeButton = new Button("Cambiar estado");
+        changeButton.getStyleClass().add("btn-success");
+        changeButton.setOnAction(event -> changeSelectedStatus());
+        toolbar.getChildren().add(changeButton);
+
         return toolbar;
     }
 
     private void configureTable() {
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getSelectionModel().addListSelectionListener(event -> {
-            if (!event.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
-                onSelectionChanged.accept(displayedIncidents.get(table.getSelectedRow()));
+        TableColumn<Incident, String> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getId().toString()));
+        idCol.setPrefWidth(80);
+        idCol.setMinWidth(70);
+        idCol.setMaxWidth(100);
+
+        TableColumn<Incident, String> titleCol = new TableColumn<>("Título");
+        titleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+
+        TableColumn<Incident, Priority> priorityCol = new TableColumn<>("Prioridad");
+        priorityCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getPriority()));
+        priorityCol.setPrefWidth(100);
+        priorityCol.setMinWidth(90);
+        priorityCol.setMaxWidth(120);
+        priorityCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Priority priority, boolean empty) {
+                super.updateItem(priority, empty);
+                if (empty || priority == null) {
+                    setText(null);
+                    getStyleClass().removeAll("priority-critical-text", "priority-high-text", "priority-normal-text");
+                } else {
+                    setText(priority.getDisplayName());
+                    getStyleClass().removeAll("priority-critical-text", "priority-high-text", "priority-normal-text");
+                    switch (priority) {
+                        case CRITICAL -> getStyleClass().add("priority-critical-text");
+                        case HIGH -> getStyleClass().add("priority-high-text");
+                        default -> getStyleClass().add("priority-normal-text");
+                    }
+                }
+            }
+        });
+
+        TableColumn<Incident, Status> statusCol = new TableColumn<>("Estado");
+        statusCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getStatus()));
+        statusCol.setPrefWidth(115);
+        statusCol.setMinWidth(105);
+        statusCol.setMaxWidth(140);
+        statusCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Status status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setGraphic(null);
+                    getStyleClass().removeAll("badge", "badge-registered", "badge-ready",
+                            "badge-in-development", "badge-in-validation", "badge-finished");
+                } else {
+                    Label badge = new Label(status.getDisplayName());
+                    badge.getStyleClass().add("badge");
+                    switch (status) {
+                        case REGISTERED -> badge.getStyleClass().add("badge-registered");
+                        case READY -> badge.getStyleClass().add("badge-ready");
+                        case IN_DEVELOPMENT -> badge.getStyleClass().add("badge-in-development");
+                        case IN_VALIDATION -> badge.getStyleClass().add("badge-in-validation");
+                        case FINISHED -> badge.getStyleClass().add("badge-finished");
+                    }
+                    setGraphic(badge);
+                    setText(null);
+                }
+            }
+        });
+
+        TableColumn<Incident, String> categoryCol = new TableColumn<>("Categoría");
+        categoryCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategory().getDisplayName()));
+        categoryCol.setPrefWidth(100);
+        categoryCol.setMinWidth(90);
+        categoryCol.setMaxWidth(130);
+
+        TableColumn<Incident, String> classOfServiceCol = new TableColumn<>("Clase de servicio");
+        classOfServiceCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getClassOfService().getDisplayName()));
+        classOfServiceCol.setPrefWidth(125);
+        classOfServiceCol.setMinWidth(115);
+        classOfServiceCol.setMaxWidth(150);
+        classOfServiceCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String cos, boolean empty) {
+                super.updateItem(cos, empty);
+                if (empty || cos == null) {
+                    setText(null);
+                    setGraphic(null);
+                    getStyleClass().removeAll("badge", "badge-expedite");
+                } else {
+                    Label badge = new Label(cos);
+                    if (ClassOfService.EXPEDITE.getDisplayName().equals(cos)) {
+                        badge.getStyleClass().addAll("badge", "badge-expedite");
+                        setGraphic(badge);
+                        setText(null);
+                    } else {
+                        setText(cos);
+                        setGraphic(null);
+                    }
+                }
+            }
+        });
+
+        table.getColumns().add(idCol);
+        table.getColumns().add(titleCol);
+        table.getColumns().add(priorityCol);
+        table.getColumns().add(statusCol);
+        table.getColumns().add(categoryCol);
+        table.getColumns().add(classOfServiceCol);
+        table.setItems(tableItems);
+        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                onSelectionChanged.accept(newVal);
+            }
+        });
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+
+        table.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Incident incident, boolean empty) {
+                super.updateItem(incident, empty);
+                getStyleClass().removeAll("priority-critical", "priority-high");
+                if (!empty && incident != null) {
+                    switch (incident.getPriority()) {
+                        case CRITICAL -> getStyleClass().add("priority-critical");
+                        case HIGH -> getStyleClass().add("priority-high");
+                    }
+                }
             }
         });
     }
@@ -108,13 +270,13 @@ public class IncidentListPanel extends JPanel {
             displayedIncidents = incidentController.findById(new IncidentId(search))
                     .map(List::of)
                     .orElseGet(List::of);
-        } else if (priorityBox.getSelectedItem() instanceof Priority priority) {
-            displayedIncidents = incidentController.findByPriority(priority);
-        } else if (statusBox.getSelectedItem() instanceof Status status) {
-            displayedIncidents = incidentController.findByStatus(status);
-        } else if ("Abiertas".equals(scopeBox.getSelectedItem())) {
+        } else if (priorityBox.getValue() != null) {
+            displayedIncidents = incidentController.findByPriority(priorityBox.getValue());
+        } else if (statusBox.getValue() != null) {
+            displayedIncidents = incidentController.findByStatus(statusBox.getValue());
+        } else if ("Abiertas".equals(scopeBox.getValue())) {
             displayedIncidents = incidentController.findOpen();
-        } else if ("Cerradas".equals(scopeBox.getSelectedItem())) {
+        } else if ("Cerradas".equals(scopeBox.getValue())) {
             displayedIncidents = incidentController.findClosed();
         } else {
             displayedIncidents = incidentController.findAll();
@@ -123,30 +285,42 @@ public class IncidentListPanel extends JPanel {
     }
 
     private void populateTable() {
-        tableModel.setRowCount(0);
-        for (Incident incident : displayedIncidents) {
-            tableModel.addRow(new Object[]{incident.getId(), incident.getTitle(), incident.getPriority(),
-                    incident.getStatus(), incident.getCategory(), incident.getClassOfService()});
-        }
+        tableItems.setAll(displayedIncidents);
+        emptyLabel.setVisible(displayedIncidents.isEmpty());
+        table.setVisible(!displayedIncidents.isEmpty());
+        boolean isSearching = !searchField.getText().trim().isEmpty();
+        emptyLabel.setText(isSearching ? "No se encontraron incidencias" : "No hay incidencias registradas");
+        resultCountLabel.setText(displayedIncidents.size() > 0
+                ? "Mostrando " + displayedIncidents.size() + " resultado"
+                        + (displayedIncidents.size() != 1 ? "s" : "")
+                : "");
     }
 
     private void changeSelectedStatus() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Seleccione una incidencia primero.",
-                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+        Incident selected = table.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Sin selección");
+            alert.setHeaderText(null);
+            alert.setContentText("Seleccione una incidencia primero.");
+            alert.showAndWait();
             return;
         }
         try {
-            incidentController.changeStatus(displayedIncidents.get(selectedRow),
-                    (Status) targetStatusBox.getSelectedItem());
-            JOptionPane.showMessageDialog(this, "Estado actualizado correctamente.",
-                    "Operación exitosa", JOptionPane.INFORMATION_MESSAGE);
+            incidentController.changeStatus(selected, targetStatusBox.getValue());
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Operación exitosa");
+            alert.setHeaderText(null);
+            alert.setContentText("Estado actualizado correctamente.");
+            alert.showAndWait();
             refresh();
             onDataChanged.run();
         } catch (RuntimeException exception) {
-            JOptionPane.showMessageDialog(this, exception.getMessage(),
-                    "No se pudo cambiar el estado", JOptionPane.ERROR_MESSAGE);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No se pudo cambiar el estado");
+            alert.setHeaderText(null);
+            alert.setContentText(exception.getMessage());
+            alert.showAndWait();
         }
     }
 }

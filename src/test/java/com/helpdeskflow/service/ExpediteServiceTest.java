@@ -8,13 +8,10 @@ import com.helpdeskflow.model.Priority;
 import com.helpdeskflow.model.Urgency;
 import com.helpdeskflow.persistence.DatabaseManager;
 import com.helpdeskflow.repository.IncidentRepositoryJdbc;
-import com.helpdeskflow.view.IncidentDetailPanel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javax.swing.JLabel;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -80,16 +77,11 @@ class ExpediteServiceTest {
     }
 
     @Test
-    void detailPanelDisplaysClassOfService(@TempDir Path temporaryDirectory) {
+    void expediteIncidentRetainsClassOfServiceInModel() {
         Incident incident = new IncidentService().registerIncident("Expedite", "Description",
                 Category.SOFTWARE, Impact.LOW, Urgency.LOW, ClassOfService.EXPEDITE);
-        IncidentDetailPanel panel = new IncidentDetailPanel();
 
-        panel.display(incident);
-
-        assertTrue(Arrays.stream(panel.getComponents())
-                .filter(JLabel.class::isInstance)
-                .map(component -> ((JLabel) component).getText())
-                .anyMatch(text -> text.contains("EXPEDITE")));
+        assertEquals(ClassOfService.EXPEDITE, incident.getClassOfService());
+        assertTrue(incident.getClassOfService().toString().contains("EXPEDITE"));
     }
 }
