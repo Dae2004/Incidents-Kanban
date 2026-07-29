@@ -118,7 +118,7 @@ Por lo tanto, comprueba compilación, dependencias, empaquetado y todas las prue
 
 ## Tablero Kanban
 
-El tablero versionado del proyecto está disponible en [KANBAN.md](KANBAN.md). 
+El tablero versionado del proyecto está disponible en [KANBAN.md](KANBAN.md).
 > **Tablero visual externo:** `[ENLACE AL TABLERO KANBAN]`
 
 El archivo incluye las historias de usuario, tareas técnicas, defectos, el cambio de requerimiento EXPEDITE, el límite WIP y el historial de movimiento de las tarjetas.
