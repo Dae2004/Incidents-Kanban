@@ -4,11 +4,17 @@ import com.helpdeskflow.model.Category;
 import com.helpdeskflow.model.Impact;
 import com.helpdeskflow.model.Urgency;
 
+/** Validates required fields before an incident enters the application layer. */
 public final class IncidentInputValidator {
 
     private IncidentInputValidator() {
     }
 
+    /**
+     * Validates incident text and classification fields.
+     *
+     * @throws IllegalArgumentException when a required value is missing or blank
+     */
     public static void validate(String title, String description, Category category,
                                 Impact impact, Urgency urgency) {
         validateText(title, "Title");

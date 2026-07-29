@@ -6,6 +6,7 @@ import com.helpdeskflow.model.Urgency;
 
 import java.util.Map;
 
+/** Calculates incident priority from the impact and urgency matrix. */
 public class PriorityCalculator {
 
     private static final Map<Impact, Map<Urgency, Priority>> PRIORITY_MATRIX = Map.of(
@@ -18,6 +19,11 @@ public class PriorityCalculator {
             Impact.LOW, Map.of(Urgency.HIGH, Priority.HIGH)
     );
 
+    /**
+     * Applies the priority matrix, defaulting to NORMAL for unspecified combinations.
+     *
+     * @return calculated priority
+     */
     public Priority calculate(Impact impact, Urgency urgency) {
         return PRIORITY_MATRIX
                 .getOrDefault(impact, Map.of())

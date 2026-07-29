@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** Calculates aggregate operational metrics for a collection of incidents. */
 public class MetricsCalculator {
 
     private static final Set<Status> OPEN_STATUSES = Set.of(
@@ -23,6 +24,13 @@ public class MetricsCalculator {
             Status.IN_VALIDATION
     );
 
+    /**
+     * Calculates counts grouped by status and priority, plus average lead time.
+     *
+     * @param incidents incidents to include
+     * @return calculated metrics
+     * @throws NullPointerException when {@code incidents} is null
+     */
     public MetricsSummary calculate(List<Incident> incidents) {
         Objects.requireNonNull(incidents, "Incidents cannot be null");
 
