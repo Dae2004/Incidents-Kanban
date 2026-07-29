@@ -10,14 +10,10 @@ HelpDesk Flow completed its planned implementation phases. This document records
 2. Automatic priority calculation from impact and urgency.
 3. Incident registration with input validation.
 4. Validated state transitions through the incident workflow.
-5. Queries and filters by status, priority, and open/closed state.
-6. Metrics calculation for counts, grouping, and lead time when timestamps exist.
-7. SQLite persistence through JDBC and the repository pattern.
-8. Swing graphical user interface with incident and metrics views.
-9. EXPEDITE class-of-service registration and filtering.
-10. General refactoring and package organization.
-11. Continuous integration with GitHub Actions.
-12. Final documentation, API documentation, audit, and delivery validation.
+5. Metrics calculation for counts, grouping, and lead time when timestamps exist.
+6. EXPEDITE class-of-service registration and filtering.
+7. General refactoring and package organization.
+8. Final documentation, API documentation, audit, and delivery validation.
 
 ## Final validation
 

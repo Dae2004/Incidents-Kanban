@@ -1,131 +1,151 @@
 # HelpDesk Flow
 
-HelpDesk Flow is a Java desktop application for registering, prioritizing, tracking, and analyzing support incidents through a Kanban-oriented workflow.
+## Descripción del sistema
 
-## Purpose
+HelpDesk Flow es un sistema de escritorio para la gestión de incidencias de soporte. Permite registrar incidencias, calcular automáticamente su prioridad a partir del impacto y la urgencia, controlar su avance mediante estados, consultar y filtrar el trabajo, visualizar métricas y persistir la información en SQLite.
 
-The application provides a small, self-contained help-desk tool. Users can register incidents, assign impact and urgency, obtain an automatic priority, move incidents through controlled states, search and filter the backlog, review metrics, and identify incidents marked with the EXPEDITE class of service.
+La aplicación también contempla la clase de servicio **EXPEDITE** para identificar incidencias que requieren atención prioritaria dentro del flujo Kanban.
 
-## Technologies
+## Integrantes
 
-- Java 21 (the Maven compiler is configured with `release 21`).
-- Apache Maven 3.9.16 was used for the final local validation; Maven 3.9 or newer is recommended.
-- Swing for the desktop graphical user interface.
-- SQLite through Xerial `sqlite-jdbc` 3.46.1.0.
-- JUnit Jupiter 5.10.3 for unit and persistence tests.
-- GitHub Actions with Temurin Java 21 for continuous integration.
+- Dae2004
+- Sebastian09192
 
-## Architecture
+## Tecnologías utilizadas
 
-The application follows a layered design with MVC responsibilities:
+- **Java 21**: lenguaje y plataforma de ejecución.
+- **Apache Maven 3.9.16**: gestión del proyecto, dependencias, compilación y pruebas.
+- **Swing**: interfaz gráfica de escritorio.
+- **SQLite** mediante Xerial `sqlite-jdbc` 3.46.1.0: persistencia local.
+- **JUnit 5** (`junit-jupiter` 5.10.3): pruebas unitarias y de persistencia.
+- **GitHub Actions**: integración continua.
+- **JDBC**: acceso a la base de datos SQLite.
+- **Git**: control de versiones.
 
-- `model`: domain entities and enumerations.
-- `service`: business use cases, priority calculation, state validation, EXPEDITE handling, and metrics.
-- `repository`: persistence abstraction plus in-memory and SQLite/JDBC implementations.
-- `persistence`: SQLite connection and schema initialization.
-- `controller`: adapts user-interface actions to application services.
-- `view`: Swing panels and the main application window.
-- `validator`: input validation at the application boundary.
-- `exception`: application-specific persistence and state-transition exceptions.
+## Requisitos de ejecución
 
-The `IncidentRepository` interface keeps services independent from the storage mechanism. `IncidentService` can therefore use the in-memory repository for isolated use cases or `IncidentRepositoryJdbc` for the desktop application.
+- JDK 21 o superior compatible con la compilación `release 21`.
+- Apache Maven 3.9 o superior.
+- Sistema operativo con soporte para una aplicación Swing.
+- Sesión gráfica disponible para ejecutar la interfaz.
+- No se requiere un servidor de base de datos: SQLite se incluye como dependencia Maven.
 
-## Package structure
+Verificar las herramientas instaladas:
 
-```text
-com.helpdeskflow
-├── controller
-├── exception
-├── model
-├── persistence
-├── repository
-├── service
-├── validator
-└── view
+```bash
+java -version
+mvn -version
 ```
 
-## Project structure
+## Compilación
 
-```text
-.
-├── .github/workflows/ci.yml       # GitHub Actions workflow
-├── src/main/java                   # Production code
-├── src/main/resources              # SQLite database and image resource locations
-├── src/test/java                   # JUnit 5 tests
-├── pom.xml                         # Maven build and dependencies
-├── README.md                       # Project guide
-├── IA-LOG.md                       # Implementation log
-└── RETROSPECTIVA.md                # Final retrospective
-```
-
-The runtime database is created at `src/main/resources/database/helpdeskflow.db` when the default JDBC repository is initialized. Database files are ignored by Git.
-
-## Installation
-
-1. Install a JDK 21 distribution and verify it with `java -version`.
-2. Install Apache Maven 3.9 or newer and verify it with `mvn -version`.
-3. Clone the repository and change into its directory.
-4. No separate database server or configuration file is required; SQLite is provided as a Maven dependency.
-
-## Build and execute
-
-Compile, package, and run the complete Maven verification lifecycle:
+Desde la raíz del repositorio, descargar dependencias, limpiar artefactos anteriores, compilar y ejecutar el ciclo completo de verificación:
 
 ```bash
 mvn clean verify
 ```
 
-Launch the Swing application with:
+Para compilar sin ejecutar las pruebas:
+
+```bash
+mvn clean package -DskipTests
+```
+
+## Ejecución
+
+La aplicación se inicia mediante la clase principal `com.helpdeskflow.HelpDeskFlowApplication`.
+
+Con Maven:
 
 ```bash
 mvn compile exec:java -Dexec.mainClass=com.helpdeskflow.HelpDeskFlowApplication
 ```
 
-Alternatively, run `com.helpdeskflow.HelpDeskFlowApplication` from an IDE configured with the Maven dependencies and a Java 21 SDK. A graphical desktop session is required for Swing.
+También se puede ejecutar `HelpDeskFlowApplication` desde un IDE, seleccionando un SDK Java 21 y las dependencias del proyecto Maven. Al iniciar la aplicación se crea el esquema SQLite si todavía no existe. La base de datos predeterminada se encuentra en `src/main/resources/database/helpdeskflow.db` y los archivos locales de base de datos están excluidos del control de versiones.
 
-## Unit tests
+## Pruebas
 
-Run all tests:
+Ejecutar todas las pruebas unitarias y de persistencia con:
 
 ```bash
 mvn test
 ```
 
-The test suite covers the domain model, priority matrix, incident registration, state transitions, queries and filters, metrics, EXPEDITE behavior, input validation, and SQLite repository operations.
+La validación recomendada para una entrega completa es:
 
-## Continuous Integration
+```bash
+mvn clean verify
+```
 
-`.github/workflows/ci.yml` defines the **Java Continuous Integration** workflow. It runs on pushes and pull requests targeting `main` or `feature/**`, uses `ubuntu-latest` with Temurin Java 21, enables Maven dependency caching, and executes:
+La suite cubre el modelo de dominio, cálculo de prioridad, registro, transiciones, consultas, filtros, métricas, EXPEDITE, validación de entradas y operaciones del repositorio SQLite.
+
+## Arquitectura
+
+El sistema utiliza una arquitectura por capas con responsabilidades MVC y principios de Clean Architecture:
+
+- **Model** (`model`): entidades `Incident`, `IncidentId` y enumeraciones del dominio.
+- **View** (`view`): ventanas y paneles Swing.
+- **Controller** (`controller`): adapta acciones de la interfaz a los servicios de aplicación.
+- **Service** (`service`): casos de uso, cálculo de prioridad, transiciones, métricas y EXPEDITE.
+- **Repository** (`repository`): abstracción de almacenamiento y sus implementaciones en memoria y JDBC.
+- **Persistence** (`persistence`): conexiones y creación del esquema SQLite.
+- **Validator** (`validator`): validación de datos de entrada.
+- **Exception** (`exception`): errores específicos de persistencia y transiciones.
+
+El **Repository Pattern** desacopla los servicios del mecanismo de almacenamiento. La separación de responsabilidades favorece **SOLID**, evita duplicación innecesaria y permite probar los servicios con un repositorio en memoria. La interfaz gráfica sigue MVC y la lógica de negocio permanece fuera de las vistas.
+
+## Decisiones principales de diseño
+
+- Se eligió Java Swing para mantener una aplicación de escritorio sencilla y sin un servidor adicional.
+- Se eligió SQLite porque ofrece persistencia local portable y no requiere infraestructura externa.
+- La prioridad se calcula en un componente dedicado mediante una matriz de impacto y urgencia.
+- Las transiciones de estado se validan en un servicio específico para impedir saltos inválidos del flujo.
+- La interfaz `IncidentRepository` permite intercambiar SQLite por un repositorio en memoria durante las pruebas.
+- La clase de servicio EXPEDITE se modela explícitamente para conservar la trazabilidad de ese requerimiento.
+- GitHub Actions ejecuta `mvn clean verify` para que una compilación o prueba fallida impida validar el cambio.
+
+## Integración Continua
+
+El workflow **Java Continuous Integration**, ubicado en `.github/workflows/ci.yml`, se ejecuta en cada `push` y `pull_request` dirigido a `main` o a ramas `feature/**`.
+
+El workflow utiliza `ubuntu-latest`, Temurin Java 21 y caché de Maven. Después de descargar el repositorio y configurar Java, ejecuta:
 
 ```text
 mvn clean verify
 ```
 
-Compilation or test failures make the workflow fail.
+Por lo tanto, comprueba compilación, dependencias, empaquetado y todas las pruebas automáticamente.
 
-## Main implemented features
+## Tablero Kanban
 
-- Incident registration with required-field validation.
-- Automatic priority calculation from impact and urgency.
-- Controlled workflow: Registered → Ready → In Development → In Validation → Finished.
-- Queries for all, open, closed, status, and priority-based incidents.
-- SQLite persistence with a repository abstraction and an in-memory implementation for isolated use cases.
-- Dashboard metrics for totals, status, priority, and average lead time when timestamps are available.
-- EXPEDITE class-of-service registration and filtering.
-- Swing interface for incident entry, list/detail views, and metrics.
-- Automated build and test execution through GitHub Actions.
+El tablero versionado del proyecto está disponible en [KANBAN.md](KANBAN.md). 
+> **Tablero visual externo:** `[ENLACE AL TABLERO KANBAN]`
 
-## Screenshots
+El archivo incluye las historias de usuario, tareas técnicas, defectos, el cambio de requerimiento EXPEDITE, el límite WIP y el historial de movimiento de las tarjetas.
 
-> **Screenshot placeholder:** add a screenshot of the incident registration/list screen here before the final presentation if visual evidence is required.
->
-> **Screenshot placeholder:** add a screenshot of the metrics tab here before the final presentation if visual evidence is required.
+## Estructura del proyecto
 
-## Authors
+```text
+.
+├── .github/workflows/ci.yml       # Integración continua
+├── src/main/java/com/helpdeskflow  # Código de producción
+│   ├── controller                   # Controladores MVC
+│   ├── exception                    # Excepciones de aplicación
+│   ├── model                        # Modelo de dominio
+│   ├── persistence                   # SQLite y JDBC
+│   ├── repository                    # Repository Pattern
+│   ├── service                       # Casos de uso y reglas
+│   ├── validator                     # Validación de entradas
+│   └── view                          # Interfaz Swing
+├── src/main/resources                # Recursos y ubicación de SQLite
+├── src/test/java                     # Pruebas JUnit 5
+├── pom.xml                           # Configuración Maven
+├── KANBAN.md                         # Tablero Kanban documental
+├── IA-LOG.md                         # Registro de implementación
+└── RETROSPECTIVA.md                  # Retrospectiva del proyecto
+```
 
-- Dae2004
-- Sebastian09192
+## Autores
 
-## Academic delivery notes
-
-The final branch contains documentation and API documentation updates only. Business logic, GUI behavior, persistence behavior, and tests remain unchanged from the completed implementation phases.
+- **Dae2004**
+- **Sebastian09192**
